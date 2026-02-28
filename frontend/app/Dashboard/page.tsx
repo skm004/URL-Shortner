@@ -16,7 +16,7 @@ export default function Dashboard() {
 
     const fetchUrls = async () => {
       try {
-        const res = await fetch("http://localhost:5000/my-urls", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/my-urls`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -39,7 +39,7 @@ export default function Dashboard() {
   }, []);
 
   const copyToClipboard = (code: string) => {
-    const link = `http://localhost:5000/${code}`;
+    const link = `${process.env.NEXT_PUBLIC_API_URL}/${code}`;
     navigator.clipboard.writeText(link);
     alert("Copied!");
   };

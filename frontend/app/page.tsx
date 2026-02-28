@@ -13,7 +13,7 @@ export default function Home() {
 
     const interval = setInterval(async () => {
       const code = shortUrl.split("/").pop();
-      const statsRes = await fetch(`http://localhost:5000/stats/${code}`);
+      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`);
       const statsData = await statsRes.json();
 
       setClicks(statsData.clicks);
@@ -29,7 +29,7 @@ export default function Home() {
 
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/shorten", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/shorten`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,7 +48,7 @@ export default function Home() {
       setShortUrl(data.shortUrl);
 
       const code = data.shortUrl.split("/").pop();
-      const statsRes = await fetch(`http://localhost:5000/stats/${code}`);
+      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`);
       const statsData = await statsRes.json();
       setClicks(statsData.clicks);
     } catch (err) {
@@ -78,7 +78,7 @@ export default function Home() {
       return;
     }
 
-    const statsRes = await fetch(`http://localhost:5000/stats/${code}`);
+    const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`);
 
     const statsData = await statsRes.json();
 
