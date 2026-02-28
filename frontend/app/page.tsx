@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 export default function Home() {
   const [originalUrl, setOriginalUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
@@ -7,13 +8,38 @@ export default function Home() {
   const [customCode, setCustomCode] = useState("");
   const [error, setError] = useState("");
   const [clicks, setClicks] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+    }
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  if (loading) return null;
 
   useEffect(() => {
     if (!shortUrl) return;
 
     const interval = setInterval(async () => {
       const code = shortUrl.split("/").pop();
-      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`);
+      const statsRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`,
+      );
       const statsData = await statsRes.json();
 
       setClicks(statsData.clicks);
@@ -48,7 +74,9 @@ export default function Home() {
       setShortUrl(data.shortUrl);
 
       const code = data.shortUrl.split("/").pop();
-      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`);
+      const statsRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`,
+      );
       const statsData = await statsRes.json();
       setClicks(statsData.clicks);
     } catch (err) {
@@ -78,7 +106,9 @@ export default function Home() {
       return;
     }
 
-    const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`);
+    const statsRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`,
+    );
 
     const statsData = await statsRes.json();
 
