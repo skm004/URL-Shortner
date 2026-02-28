@@ -73,7 +73,7 @@ export default function Dashboard() {
 
                   <td className="p-3 text-blue-400">
                     <a
-                      href={`http://localhost:5000/${url.shortCode}`}
+                      href={`${process.env.NEXT_PUBLIC_API_URL}/${url.shortCode}`}
                       target="_blank"
                     >
                       {url.shortCode}
