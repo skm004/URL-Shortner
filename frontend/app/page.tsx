@@ -1,53 +1,56 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 export default function Home() {
   const [originalUrl, setOriginalUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [customCode, setCustomCode] = useState("");
   const [error, setError] = useState("");
-  const [clicks, setClicks] = useState(null);
+  const [clicks, setClicks] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
 
+  // 🔐 Auth check (SSR safe)
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      router.push("/login");
-    }
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("token")
+        : null;
 
     if (!token) {
       router.push("/login");
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
-  if (loading) return null;
-
+  // 📊 Auto refresh stats
   useEffect(() => {
     if (!shortUrl) return;
 
     const interval = setInterval(async () => {
-      const code = shortUrl.split("/").pop();
-      const statsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`,
-      );
-      const statsData = await statsRes.json();
+      try {
+        const code = shortUrl.split("/").pop();
 
-      setClicks(statsData.clicks);
+        const statsRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`
+        );
+
+        const statsData = await statsRes.json();
+        setClicks(statsData.clicks);
+      } catch (err) {
+        console.log(err);
+      }
     }, 3000);
 
     return () => clearInterval(interval);
   }, [shortUrl]);
 
+  // 🚀 Shorten handler
   const handleShorten = async () => {
     try {
       setError("");
@@ -55,14 +58,22 @@ export default function Home() {
 
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/shorten`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ originalUrl, customCode }),
-      });
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/shorten`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ originalUrl, customCode }),
+        }
+      );
 
       const data = await res.json();
 
@@ -74,9 +85,11 @@ export default function Home() {
       setShortUrl(data.shortUrl);
 
       const code = data.shortUrl.split("/").pop();
+
       const statsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`
       );
+
       const statsData = await statsRes.json();
       setClicks(statsData.clicks);
     } catch (err) {
@@ -85,6 +98,7 @@ export default function Home() {
     }
   };
 
+  // 📋 Copy handler
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shortUrl);
     setCopied(true);
@@ -94,26 +108,8 @@ export default function Home() {
     }, 2000);
   };
 
-  const refreshStats = async () => {
-    if (!shortUrl) return;
-
-    const code = shortUrl.split("/").pop();
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
-    const statsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/stats/${code}`,
-    );
-
-    const statsData = await statsRes.json();
-
-    setClicks(statsData.clicks);
-  };
+  // ⏳ Prevent UI before auth check
+  if (loading) return null;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 px-4">
